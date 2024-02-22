@@ -1,38 +1,40 @@
-// src/services/authService.js
-
+// frontend/src/services/authService.js
 import axios from 'axios';
 
-const API_URL = '/api/'; // Adjust this URL based on your API endpoint
+const API_URL = process.env.REACT_APP_BACKEND_URL || 'http://127.0.0.1:5000/api/';
 
-class AuthService {
-  login(username, password) {
-    return axios
-      .post(API_URL + 'login', {
-        username,
-        password,
-      })
-      .then((response) => {
-        if (response.data.access_token) {
-          localStorage.setItem('user', JSON.stringify(response.data));
-        }
-        return response.data;
-      });
-  }
+const register = (username, password) => {
+  return axios.post(API_URL + 'register', { username, password });
+};
 
-  logout() {
-    localStorage.removeItem('user');
-  }
-
-  register(username, password) {
-    return axios.post(API_URL + 'register', {
-      username,
-      password,
+const login = (username, password) => {
+  return axios.post(API_URL + 'login', { username, password })
+    .then((response) => {
+      if (response.data.access_token) {
+        localStorage.setItem('user', JSON.stringify(response.data));
+      }
+      return response.data;
     });
-  }
+};
 
-  getCurrentUser() {
-    return JSON.parse(localStorage.getItem('user'));
-  }
-}
+const logout = () => {
+  localStorage.removeItem('user');
+};
 
-export default new AuthService();
+const getCurrentUser = () => {
+  return JSON.parse(localStorage.getItem('user'));
+};
+
+const getAuthToken = () => {
+  const user = getCurrentUser();
+  return user ? user.access_token : null;
+};
+
+export default {
+  register,
+  login,
+  logout,
+  getCurrentUser,
+  getAuthToken, // Make sure this is correctly exported
+};
+

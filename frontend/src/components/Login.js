@@ -1,34 +1,23 @@
-// src/components/Login.js
-
 import React, { useState } from 'react';
 import AuthService from '../services/authService';
-import { useHistory } from 'react-router-dom'; // Import useHistory for redirection
+import { useNavigate } from 'react-router-dom';
 
 const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
-  const history = useHistory(); // Use useHistory hook for redirection
+  const navigate = useNavigate();
 
   const handleLogin = (e) => {
     e.preventDefault();
 
-    setMessage("");
-
     AuthService.login(username, password).then(
-      (data) => {
-        localStorage.setItem('user', JSON.stringify(data)); // Store the user token
-        history.push("/todo-lists"); // Redirect to todo lists page after login
+      () => {
+        navigate("/todo-lists"); // Corrected from 'history.push' to 'navigate'
         window.location.reload();
       },
       (error) => {
-        const resMessage =
-          (error.response &&
-            error.response.data &&
-            error.response.data.message) ||
-          error.message ||
-          error.toString();
-
+        const resMessage = (error.response && error.response.data && error.response.data.message) || error.message || error.toString();
         setMessage(resMessage);
       }
     );
@@ -36,9 +25,23 @@ const Login = () => {
 
   return (
     <div>
-      {/* Your login form here */}
+      <h2>Login</h2>
+      <form onSubmit={handleLogin}>
+        <div>
+          <label htmlFor="username">Username</label>
+          <input type="text" name="username" value={username} onChange={(e) => setUsername(e.target.value)} />
+        </div>
+        <div>
+          <label htmlFor="password">Password</label>
+          <input type="password" name="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+        </div>
+        <button type="submit">Login</button>
+        {message && <div className="message">{message}</div>}
+      </form>
     </div>
   );
 };
 
 export default Login;
+
+

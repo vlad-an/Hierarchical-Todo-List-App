@@ -1,18 +1,18 @@
 import React from 'react';
-import AuthService from './services/authService';
-import { useHistory } from 'react-router-dom';
+import AuthService from '../services/authService';
+import { useNavigate } from 'react-router-dom';
 
 const LogoutButton = () => {
-  const history = useHistory();
+  const navigate = useNavigate();
 
   const handleLogout = () => {
     AuthService.logout();
-    history.push('/login');
+    navigate('/login'); // Updated for react-router-dom v6
   };
 
-  return (
-    <button onClick={handleLogout}>Logout</button>
-  );
+  return <button onClick={handleLogout}>Logout</button>;
 };
 
 export default LogoutButton;
+
+

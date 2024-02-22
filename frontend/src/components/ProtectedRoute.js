@@ -1,21 +1,11 @@
-// src/components/ProtectedRoute.js
-
-
 import React from 'react';
-import { Route, Redirect } from 'react-router-dom';
+import { Navigate, Outlet } from 'react-router-dom';
+import AuthService from '../services/authService';
 
-const ProtectedRoute = ({ component: Component, ...rest }) => {
-  const isLoggedIn = () => {
-    const user = JSON.parse(localStorage.getItem('user'));
-    return !!user;
-  };
+const ProtectedRoute = () => {
+  const isLoggedIn = AuthService.getCurrentUser() != null;
 
-  return (
-    <Route {...rest} render={
-      props => isLoggedIn() ? (<Component {...props} />) : (<Redirect to="/login" />)
-    } />
-  );
+  return isLoggedIn ? <Outlet /> : <Navigate to="/login" replace />;
 };
 
 export default ProtectedRoute;
-
