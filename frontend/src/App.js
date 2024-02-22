@@ -59,7 +59,7 @@ function App() {
                 <Route path="/register" element={<Register />} />
                 <Route path="/todo-lists" element={<ProtectedRoute isLoggedIn={isLoggedIn}>
                     <div>
-                        {todoLists.map(list => <TodoList key={list.id} list={list} onListUpdate={refreshTodoLists} />)}
+                        {Array.isArray(todoLists) && todoLists.map(list => <TodoList key={list.id} list={list} onListUpdate={refreshTodoLists} />)}
                     </div>
                 </ProtectedRoute>} />
                 <Route path="*" element={<Navigate replace to="/login" />} />

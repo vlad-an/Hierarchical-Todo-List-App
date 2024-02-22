@@ -1,7 +1,8 @@
-// Assuming AddList.js is located in /src/components/
+// frontend/src/components/AddList.js
+
 import React, { useState } from 'react';
 import axios from 'axios';
-import AuthService from '../services/authService'; // Correct path if AuthService is in /src/services/
+import AuthService from '../services/authService';
 
 function AddList({ onListsUpdate }) {
   const [newListTitle, setNewListTitle] = useState('');
@@ -18,6 +19,7 @@ function AddList({ onListsUpdate }) {
       });
       setNewListTitle('');
       setShowForm(false);
+      // Fetch updated lists after adding a new one
       onListsUpdate();
     } catch (error) {
       console.error('Error adding list:', error);
@@ -44,3 +46,5 @@ function AddList({ onListsUpdate }) {
 }
 
 export default AddList;
+
+

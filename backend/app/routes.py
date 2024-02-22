@@ -19,6 +19,14 @@ def create_user():
     db.session.commit()
     return jsonify({'message': 'New user created'}), 201
 
+@api.route('/lists', methods=['GET'])  # Handle GET requests separately
+@jwt_required()
+def get_lists():
+    current_user_id = get_jwt_identity()
+    user_lists = List.query.filter_by(user_id=current_user_id).all()
+    lists_data = [{"id": list_.id, "title": list_.title} for list_ in user_lists]
+    return jsonify({"lists": lists_data}), 200
+
 @api.route('/lists', methods=['POST'])  # Updated path
 @jwt_required()
 def create_list():
