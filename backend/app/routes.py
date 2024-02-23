@@ -1,6 +1,9 @@
 from flask import Blueprint, jsonify, request
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
+from flask_jwt_extended import (
+    create_access_token, create_refresh_token, 
+    jwt_required, get_jwt_identity
+)
 from .models import User, List, Item, db
 
 # Create a Blueprint for this module
@@ -24,7 +27,15 @@ def create_user():
 def get_lists():
     current_user_id = get_jwt_identity()
     user_lists = List.query.filter_by(user_id=current_user_id).all()
-    lists_data = [{"id": list_.id, "title": list_.title} for list_ in user_lists]
+    lists_data = [
+        {
+            "id": list_.id,
+            "title": list_.title,
+            "items": [
+                {"id": item.id, "content": item.content} for item in list_.items
+            ]
+        } for list_ in user_lists
+    ]
     return jsonify({"lists": lists_data}), 200
 
 @api.route('/lists', methods=['POST'])  # Updated path
@@ -45,13 +56,13 @@ def create_item(list_id):
     list_ = List.query.get_or_404(list_id)
     if list_.user_id != current_user_id:
         return jsonify({'message': 'Not authorized to add items to this list'}), 403
-
     data = request.get_json()
     # Optionally handle parent_id for hierarchical item structure
     new_item = Item(content=data['content'], list_id=list_id, parent_id=data.get('parent_id', None))
     db.session.add(new_item)
     db.session.commit()
-    return jsonify({'message': 'New item created'}), 201
+    # Ensure the response includes the new item's id
+    return jsonify({'id': new_item.id, 'content': new_item.content, 'list_id': new_item.list_id}), 201
 
 @api.route('/register', methods=['POST'])
 def register():
@@ -63,13 +74,21 @@ def register():
     db.session.commit()
     return jsonify({'message': 'Registered successfully'}), 201
 
+@api.route('/token/refresh', methods=['POST'])
+@jwt_required(refresh=True)
+def refresh():
+    current_user = get_jwt_identity()
+    new_token = create_access_token(identity=current_user)
+    return jsonify({'access_token': new_token})
+
 @api.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
     user = User.query.filter_by(username=data['username']).first()
     if user and check_password_hash(user.password, data['password']):
         access_token = create_access_token(identity=user.id)
-        return jsonify(access_token=access_token), 200
+        refresh_token = create_refresh_token(identity=user.id)
+        return jsonify(access_token=access_token, refresh_token=refresh_token), 200
     else:
         return jsonify({'message': 'Invalid username or password'}), 401
     
@@ -92,10 +111,11 @@ def update_list(list_id):
 @jwt_required()
 def update_item(item_id):
     current_user_id = get_jwt_identity()
-    item = Item.query.filter_by(id=item_id, list_id=List.query.filter_by(user_id=current_user_id)).first()
-    if item:
-        data = request.get_json()
-        item.content = data['content']
+    data = request.get_json()
+    # Corrected: First, verify the list belongs to the current user
+    item_to_update = Item.query.join(List).filter(Item.id == item_id, List.user_id == current_user_id).first()
+    if item_to_update:
+        item_to_update.content = data.get('content', item_to_update.content)  # Only updating content, adjust as needed
         db.session.commit()
         return jsonify({'message': 'Item updated successfully'}), 200
     else:
@@ -119,9 +139,10 @@ def delete_list(list_id):
 @jwt_required()
 def delete_item(item_id):
     current_user_id = get_jwt_identity()
-    item = Item.query.filter_by(id=item_id, list_id=List.query.filter_by(user_id=current_user_id)).first()
-    if item:
-        db.session.delete(item)
+    # Corrected: First, verify the list belongs to the current user
+    item_to_delete = Item.query.join(List).filter(Item.id == item_id, List.user_id == current_user_id).first()
+    if item_to_delete:
+        db.session.delete(item_to_delete)
         db.session.commit()
         return jsonify({'message': 'Item deleted successfully'}), 200
     else:

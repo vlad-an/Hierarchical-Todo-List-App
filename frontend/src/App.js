@@ -22,14 +22,14 @@ function App() {
     const fetchTodoLists = async () => {
         try {
             const response = await apiClient.get('/lists');
-            if (response.status === 200) {
-                setTodoLists(response.data);
+            if (response.status === 200 && Array.isArray(response.data.lists)) {
+                setTodoLists(response.data.lists); // Make sure to set an array
             } else {
-                throw new Error('Failed to fetch todo lists');
+                throw new Error('Failed to fetch todo lists or invalid format received');
             }
         } catch (error) {
             console.error("Error fetching todo lists:", error);
-            // Optionally, update the state to indicate an error to the user
+            setTodoLists([]); // Ensure it's reset to an array even in case of an error
         }
     };
 

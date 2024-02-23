@@ -3,7 +3,7 @@ import apiClient from '../services/apiClient'; // Updated import for API client
 import { useNavigate } from 'react-router-dom';
 import AuthService from '../services/authService';
 
-const Login = () => {
+const Login = ({ setIsLoggedIn }) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
@@ -11,14 +11,22 @@ const Login = () => {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-
     try {
-      const response = await apiClient.post('/login', { username, password });
-      AuthService.login(response.data); // Assuming login method handles setting user data in localStorage
+      await AuthService.login(username, password);
+      setIsLoggedIn(true);
       navigate("/todo-lists");
-      window.location.reload();
     } catch (error) {
-      const resMessage = (error.response && error.response.data && error.response.data.message) || error.message || error.toString();
+      let resMessage;
+      if (error.response) {
+        // Server responded with a status code outside the 2xx range
+        resMessage = error.response.data.message || error.message;
+      } else if (error.request) {
+        // The request was made but no response was received
+        resMessage = "No response from server";
+      } else {
+        // Something else caused the error
+        resMessage = error.message;
+      }
       setMessage(resMessage);
     }
   };

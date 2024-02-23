@@ -14,14 +14,38 @@ const authService = {
 
   // Login User
   login: async (username, password) => {
-    const response = await apiClient.post(API_URL + 'login', {
+    const response = await apiClient.post('/login', {
       username,
       password,
     });
-    if (response.data.access_token) {
-      localStorage.setItem('user', JSON.stringify(response.data));
+    if (response.data.access_token && response.data.refresh_token) {
+      localStorage.setItem('user', JSON.stringify({
+        access_token: response.data.access_token,
+        refresh_token: response.data.refresh_token
+      }));
     }
     return response.data;
+  },
+
+  refreshToken: async () => {
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (!user?.refresh_token) return null;
+
+    try {
+      const response = await apiClient.post('/token/refresh', {
+        refresh_token: user.refresh_token
+      });
+      if (response.data.access_token) {
+        localStorage.setItem('user', JSON.stringify({
+          ...user,
+          access_token: response.data.access_token
+        }));
+        return response.data.access_token;
+      }
+    } catch (error) {
+      console.error('Error refreshing token:', error);
+      return null;
+    }
   },
 
   // Logout User

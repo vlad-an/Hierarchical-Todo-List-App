@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import TodoItem from './TodoItem'; // Verify this import path is correct
-import apiClient from '../services/apiClient'; // Updated import
-import AuthService from '../services/authService'; // Keep if needed for other uses
+import TodoItem from './TodoItem';
+import apiClient from '../services/apiClient';
 
 function TodoList({ list, onListUpdate }) {
   const [showAddItemForm, setShowAddItemForm] = useState(false);
   const [newItemContent, setNewItemContent] = useState('');
-  const [feedbackMessage, setFeedbackMessage] = useState(''); // For user feedback
+  const [feedbackMessage, setFeedbackMessage] = useState('');
+  const [items, setItems] = useState(list.items || []); // Initialize items from the list
 
   const handleAddItem = async (e) => {
     e.preventDefault();
@@ -15,24 +15,39 @@ function TodoList({ list, onListUpdate }) {
       return;
     }
     try {
-      await apiClient.post(`/lists/${list.id}/items`, { // Using apiClient for the request
+      const response = await apiClient.post(`/items/${list.id}`, {
         content: newItemContent,
       });
+      const newItem = { id: response.data.id, content: newItemContent };
+      setItems(currentItems => [...currentItems, newItem]);
+      
       setShowAddItemForm(false);
       setNewItemContent('');
       setFeedbackMessage('');
-      onListUpdate(); // Triggers a refresh of the list items, consider re-fetching or updating state
     } catch (error) {
       console.error('Error adding item:', error);
       setFeedbackMessage('Failed to add item. Please try again.');
     }
   };
 
+  const updateItemInList = (updatedItem) => {
+    setItems(currentItems => currentItems.map(item => item.id === updatedItem.id ? updatedItem : item));
+  };
+
+  const deleteItemFromList = (itemId) => {
+    setItems(currentItems => currentItems.filter(item => item.id !== itemId));
+  };
+
   return (
     <div>
       <h2>{list.title}</h2>
-      {list.items && list.items.map(item => (
-        <TodoItem key={item.id} item={item} onItemUpdate={onListUpdate} />
+      {items.map(item => (
+        <TodoItem 
+          key={item.id} 
+          item={item} 
+          onItemUpdate={updateItemInList} 
+          onItemDelete={deleteItemFromList} 
+        />
       ))}
       <button onClick={() => setShowAddItemForm(!showAddItemForm)}>
         {showAddItemForm ? 'Cancel' : 'Add Item'}
@@ -48,12 +63,13 @@ function TodoList({ list, onListUpdate }) {
           <button type="submit">Save Item</button>
         </form>
       )}
-      {feedbackMessage && <p>{feedbackMessage}</p>} {/* Display feedback message */}
+      {feedbackMessage && <p>{feedbackMessage}</p>}
     </div>
   );
 }
 
 export default TodoList;
+
 
 
 
