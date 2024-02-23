@@ -1,31 +1,32 @@
-// frontend/src/components/TodoItem.js
 import React, { useState } from 'react';
-import axios from 'axios';
-import AuthService from '../services/authService';
+import apiClient from '../services/apiClient'; // Updated import
+import AuthService from '../services/authService'; // Keep if needed for other purposes
 
 function TodoItem({ item, onItemUpdate }) {
     const [isEditing, setIsEditing] = useState(false);
     const [editedContent, setEditedContent] = useState(item.content);
 
-    const authToken = AuthService.getAuthToken(); // Ensure AuthService includes getAuthToken
-
-    const handleEditSave = () => {
-        axios.put(`${process.env.REACT_APP_API_URL || 'http://127.0.0.1:5000'}/api/items/${item.id}`, {
-            content: editedContent,
-        }, {
-            headers: { Authorization: `Bearer ${authToken}` },
-        }).then(() => {
+    const handleEditSave = async () => {
+        try {
+            await apiClient.put(`/items/${item.id}`, { // Using apiClient for the request
+                content: editedContent,
+            });
             setIsEditing(false);
             onItemUpdate(); // This function should trigger a refresh of the items
-        }).catch(error => console.error('Error updating item:', error));
+        } catch (error) {
+            console.error('Error updating item:', error);
+            // Optionally, handle error with user feedback
+        }
     };
 
-    const handleDelete = () => {
-        axios.delete(`${process.env.REACT_APP_API_URL || 'http://127.0.0.1:5000'}/api/items/${item.id}`, {
-            headers: { Authorization: `Bearer ${authToken}` },
-        }).then(() => {
+    const handleDelete = async () => {
+        try {
+            await apiClient.delete(`/items/${item.id}`); // Using apiClient for the request
             onItemUpdate(); // Refresh items upon deletion
-        }).catch(error => console.error('Error deleting item:', error));
+        } catch (error) {
+            console.error('Error deleting item:', error);
+            // Optionally, handle error with user feedback
+        }
     };
 
     return (
@@ -52,5 +53,6 @@ function TodoItem({ item, onItemUpdate }) {
 }
 
 export default TodoItem;
+
 
 

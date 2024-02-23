@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import AuthService from '../services/authService';
+import apiClient from '../services/apiClient'; // Updated import for API client
 import { useNavigate } from 'react-router-dom';
+import AuthService from '../services/authService';
 
 const Login = () => {
   const [username, setUsername] = useState("");
@@ -8,19 +9,18 @@ const Login = () => {
   const [message, setMessage] = useState("");
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
 
-    AuthService.login(username, password).then(
-      () => {
-        navigate("/todo-lists"); // Corrected from 'history.push' to 'navigate'
-        window.location.reload();
-      },
-      (error) => {
-        const resMessage = (error.response && error.response.data && error.response.data.message) || error.message || error.toString();
-        setMessage(resMessage);
-      }
-    );
+    try {
+      const response = await apiClient.post('/login', { username, password });
+      AuthService.login(response.data); // Assuming login method handles setting user data in localStorage
+      navigate("/todo-lists");
+      window.location.reload();
+    } catch (error) {
+      const resMessage = (error.response && error.response.data && error.response.data.message) || error.message || error.toString();
+      setMessage(resMessage);
+    }
   };
 
   return (
@@ -43,5 +43,6 @@ const Login = () => {
 };
 
 export default Login;
+
 
 

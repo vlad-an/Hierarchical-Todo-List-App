@@ -1,15 +1,12 @@
-// frontend/src/components/TodoList.js
 import React, { useState } from 'react';
 import TodoItem from './TodoItem'; // Verify this import path is correct
-import axios from 'axios';
-import AuthService from '../services/authService';
+import apiClient from '../services/apiClient'; // Updated import
+import AuthService from '../services/authService'; // Keep if needed for other uses
 
 function TodoList({ list, onListUpdate }) {
   const [showAddItemForm, setShowAddItemForm] = useState(false);
   const [newItemContent, setNewItemContent] = useState('');
   const [feedbackMessage, setFeedbackMessage] = useState(''); // For user feedback
-
-  const authToken = AuthService.getAuthToken();
 
   const handleAddItem = async (e) => {
     e.preventDefault();
@@ -18,10 +15,8 @@ function TodoList({ list, onListUpdate }) {
       return;
     }
     try {
-      await axios.post(`${process.env.REACT_APP_BACKEND_URL || 'http://127.0.0.1:5000'}/api/lists/${list.id}/items`, {
+      await apiClient.post(`/lists/${list.id}/items`, { // Using apiClient for the request
         content: newItemContent,
-      }, {
-        headers: { Authorization: `Bearer ${authToken}` },
       });
       setShowAddItemForm(false);
       setNewItemContent('');
@@ -59,6 +54,7 @@ function TodoList({ list, onListUpdate }) {
 }
 
 export default TodoList;
+
 
 
 

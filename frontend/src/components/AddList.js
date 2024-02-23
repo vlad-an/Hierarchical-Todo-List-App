@@ -1,7 +1,7 @@
 // frontend/src/components/AddList.js
 
 import React, { useState } from 'react';
-import axios from 'axios';
+import apiClient from '../services/apiClient';
 import AuthService from '../services/authService';
 
 function AddList({ onListsUpdate }) {
@@ -12,10 +12,8 @@ function AddList({ onListsUpdate }) {
     e.preventDefault();
     const authToken = AuthService.getAuthToken();
     try {
-      await axios.post(`${process.env.REACT_APP_API_URL || 'http://127.0.0.1:5000'}/api/lists`, {
+      await apiClient.post('/lists', { // Using apiClient for the request
         title: newListTitle
-      }, {
-        headers: { Authorization: `Bearer ${authToken}` }
       });
       setNewListTitle('');
       setShowForm(false);

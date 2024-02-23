@@ -1,26 +1,27 @@
 import React, { useState } from 'react';
-import AuthService from '../services/authService';
+import apiClient from '../services/apiClient'; // Use the centralized API client
 import { useNavigate } from 'react-router-dom';
 
 const Register = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
-  const navigate = useNavigate(); // Updated for react-router-dom v6
+  const navigate = useNavigate();
 
-  const handleRegister = (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
 
-    AuthService.register(username, password).then(
-      response => {
-        setMessage(response.data.message);
-        navigate("/login"); // Updated for react-router-dom v6
-      },
-      error => {
-        const resMessage = (error.response && error.response.data && error.response.data.message) || error.message || error.toString();
-        setMessage(resMessage);
-      }
-    );
+    try {
+      const response = await apiClient.post('/register', {
+        username,
+        password
+      });
+      setMessage(response.data.message);
+      navigate("/login"); // Navigate to login on successful registration
+    } catch (error) {
+      const resMessage = (error.response && error.response.data && error.response.data.message) || error.message || error.toString();
+      setMessage(resMessage);
+    }
   };
 
   return (
@@ -45,5 +46,6 @@ const Register = () => {
 };
 
 export default Register;
+
 
 

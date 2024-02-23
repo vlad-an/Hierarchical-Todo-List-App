@@ -1,40 +1,48 @@
-// frontend/src/services/authService.js
-import axios from 'axios';
+import apiClient from './apiClient'; // Ensure you have this for direct API calls
 
 const API_URL = process.env.REACT_APP_BACKEND_URL || 'http://127.0.0.1:5000/api/';
 
-const register = (username, password) => {
-  return axios.post(API_URL + 'register', { username, password });
-};
-
-const login = (username, password) => {
-  return axios.post(API_URL + 'login', { username, password })
-    .then((response) => {
-      if (response.data.access_token) {
-        localStorage.setItem('user', JSON.stringify(response.data));
-      }
-      return response.data;
+const authService = {
+  // Register User
+  register: async (username, password) => {
+    const response = await apiClient.post(API_URL + 'register', {
+      username,
+      password,
     });
+    return response.data;
+  },
+
+  // Login User
+  login: async (username, password) => {
+    const response = await apiClient.post(API_URL + 'login', {
+      username,
+      password,
+    });
+    if (response.data.access_token) {
+      localStorage.setItem('user', JSON.stringify(response.data));
+    }
+    return response.data;
+  },
+
+  // Logout User
+  logout: () => {
+    localStorage.removeItem('user');
+  },
+
+  // Get Current User
+  getCurrentUser: () => {
+    const userStr = localStorage.getItem('user');
+    if (userStr) return JSON.parse(userStr);
+    return null;
+  },
+
+  // Get Auth Token
+  getAuthToken: () => {
+    const user = authService.getCurrentUser();
+    return user?.access_token || null;
+  },
 };
 
-const logout = () => {
-  localStorage.removeItem('user');
-};
+export default authService;
 
-const getCurrentUser = () => {
-  return JSON.parse(localStorage.getItem('user'));
-};
-
-const getAuthToken = () => {
-  const user = getCurrentUser();
-  return user ? user.access_token : null;
-};
-
-export default {
-  register,
-  login,
-  logout,
-  getCurrentUser,
-  getAuthToken, // Make sure this is correctly exported
-};
 
